@@ -1,161 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Document</title>
+    <title>Bang</title>
 </head>
 <body>
-    <canvas id="canvas"></canvas>   
+    <canvas id="canvas"></canvas>
     <script>
-        var canvas = document.getElementById('canvas');
-        var context = canvas.getContext('2d');
+        var canvas = document.getElementById("canvas");
+        var context = canvas.getContext("2d");
 
-        canvas.width = 480;
-        canvas.height = 720;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.fillStyle = "brown";
+        context.fillRect(100, 50, 400, 300);
 
-        class Vector2D {
-            constructor(x = 0, y = 0) {
-                this.x = x;
-                this.y = y;
+        context.fillStyle = "blue";
+        context.fillRect(150, 75, 50, 50);
+        context.fillRect(235, 75, 50, 50);
+        context.fillRect(320, 75, 50, 50);
+        context.fillRect(405, 75, 50, 50);
+
+        context.fillStyle = "green";
+        context.fillRect(120, 150, 100, 175);
+        context.fillRect(250, 150, 100, 175);
+        context.fillRect(380, 150, 100, 175);
+
+        class Role {
+            constructor(name, des) {
+                this.name = name;
+                this.descript = des;
             }
         }
 
         class Unit {
-            constructor(position, velocity, color, speed = 7) {
-                this.size = 50;
-                this.speed = speed;
-                this.color = color;
-                this.position = position;
-                this.velocity = velocity;
-                this.half = this.size / 2;
-            }
-
-            Update() {
-                context.fillStyle = this.color;
-                var half = this.size / 2;
-                context.fillRect(this.position.x - half, this.position.y - half, this.size, this.size);
-                this.position.x += this.velocity.x;
-                this.position.y += this.velocity.y;
-            }
-
-            Collision() {
-
+            constructor(name, life, ability) {
+                this.name = name;
+                this.life = life;
+                this.ability = ability;
             }
         }
 
-        var bullet = [];
-
-        class Bullet extends Unit {
-            constructor(position) {
-                super(position, new Vector2D(0, 0), 'blue', 13);
-                this.velocity.y = -this.speed;
-                this.size = 10;
-            }
-
-            Update() {
-                super.Update();
-                this.Collision();
-            }
-
-            Collision() {
-                if(this.position.y <= -10) {
-                    bullet.shift();
-                }
+        class Weapon {
+            constructor(name, range) {
+                this.name = name;
+                this.range = range;
             }
         }
+        
+        const Roles = [
+            new Role("SCERIFFO[보안관]", "무법자 모두와 배신자를 사살하라!"),
+            new Role("VICE[부관]", "보안관을 보호하라!\n무법자 모두와 배신자를 사살하라!"),
+            new Role("FUORILEGGE[무법자]", "보안관을 사살하라!"),
+            new Role("RINNEGATO[배신자]", "게임이 끝날 때까지 혼자 살아남아라!"),
+        ];
+        const Units = [
+            new Unit("CALAMITY JANET[캘러미티 자넷]", 4, {bang: "miss or bang"}),
+            new Unit("WILIY THE KID[윌리 더 키드]", 4, {bang: "no limit"}),
+            new Unit("KIT CARLSON[키트 칼슨]", 4, {bang: "no limit"}),
+        ];
+        const Weapons = [
+            new Weapon("VOLCANIC[볼캐닉]", 1),
+            new Weapon("SCHOFIELD[스코필드]", 2),
+            new Weapon("REMINGTON[레밍턴]", 3),
+            new Weapon("REV.CARABINE[카빈]", 4),
+            new Weapon("WINCHESTER[윈체스터]", 5),
+        ];
 
-        class Hero extends Unit {
-            constructor() {
-                super(new Vector2D(canvas.width / 2, canvas.height / 2), new Vector2D(0, 0), 'red')
-                this.keys = {
-                    w: false,
-                    a: false,
-                    s: false,
-                    d: false,
-                    space: false,
-                }
-            }
-
-            Update() {
-                super.Update();
-                if(this.keys.w) this.velocity.y = -this.speed;
-                else if(this.keys.s) this.velocity.y = this.speed;
-                else if(this.velocity.y != 0) this.velocity.y = 0;
-
-                if(this.keys.a) this.velocity.x = -this.speed;
-                else if(this.keys.d) this.velocity.x = this.speed;
-                else if(this.velocity.x != 0) this.velocity.x = 0;
-                
-                if(this.keys.space) {
-                    var b = new Bullet(new Vector2D(this.position.x, this.position.y));
-                    bullet.push(b);
-                }
-                
-                this.Collision();
-            }
-
-            Collision() {
-                if(this.position.x <= this.half) this.position.x = this.half;
-                if(this.position.x >= canvas.width - this.half) this.position.x = canvas.width - this.half;
-                if(this.position.y <= this.half) this.position.y = this.half;
-                if(this.position.y >= canvas.height - this.half) this.position.y = canvas.height - this.half;
-            }
+        function Init() {
+            
         }
-
-        var hero = new Hero();
-
-        function Update() {
-            window.requestAnimationFrame(Update);
-            context.fillStyle = 'black'
-            context.fillRect(0, 0, canvas.width, canvas.height);
-            hero.Update();
-            bullet.forEach(function(item) {
-                item.Update();
-            })
-        }
-
-        Update();
-
-        window.addEventListener('keydown', function(e) {
-            switch(e.key) {
-                case 'w':
-                    hero.keys.w = true;
-                    break;
-                case 'd':
-                    hero.keys.d = true;
-                    break;
-                case 'a':
-                    hero.keys.a = true;
-                    break;
-                case 's':
-                    hero.keys.s = true;
-                    break;
-                case ' ':
-                    hero.keys.space = true;
-                    break;
-            }
-        })
-
-        window.addEventListener('keyup', function(e) {
-            switch(e.key) {
-                case 'w':
-                    hero.keys.w = false;
-                    break;
-                case 'd':
-                    hero.keys.d = false;
-                    break;
-                case 'a':
-                    hero.keys.a = false;
-                    break;
-                case 's':
-                    hero.keys.s = false;
-                    break;
-                case ' ':
-                    hero.keys.space = false;
-                    break;
-            }
-        })
+        
     </script>
+
 </body>
 </html>
