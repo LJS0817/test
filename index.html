@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Bang</title>
+    <title>shooting</title>
 </head>
 <body>
     <canvas id="canvas"></canvas>
@@ -12,126 +12,216 @@
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        context.fillStyle = "brown";
-        context.fillRect(100, 50, 400, 300);
+        function Init_Input() {
+            return {
+                    w: false,
+                    a: false,
+                    s: false,
+                    d: false,
+                    attack: false,
+                };
+        }
 
-        context.fillStyle = "blue";
-        context.fillRect(150, 75, 50, 50);
-        context.fillRect(235, 75, 50, 50);
-        context.fillRect(320, 75, 50, 50);
-        context.fillRect(405, 75, 50, 50);
+        class Vector2D {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+            }
 
-        context.fillStyle = "green";
-        context.fillRect(120, 150, 100, 175);
-        context.fillRect(250, 150, 100, 175);
-        context.fillRect(380, 150, 100, 175);
+            Add(vec) {
+                this.x += vec.x;
+                this.y += vec.y;
+            }
 
-        class Role {
-            constructor(name, des) {
-                this.name = name;
-                this.descript = des;
+            Sub(vec) {
+                this.x -= vec.x;
+                this.y -= vec.y;
+            }
+
+            Zero() {
+                this.x = 0;
+                this.y = 0;
             }
         }
 
         class Unit {
-            constructor(name, life, ability) {
-                this.name = name;
-                this.life = life;
-                this.ability = ability;
+            constructor(pos, size, power, speed) {
+                this.position = pos;
+                this.size = size;
+                this.attack = power;
+                this.speed = speed;
+                this.velocity = new Vector2D(0, 0);
             }
-        }
 
-        class Weapon {
-            constructor(name, range) {
-                this.name = name;
-                this.range = range;
-            }
-        }
-
-        class Card {
-            constructor(name, ability, type, usage = true) {
-                this.name = name;
-                this.abilty = ability;
-                this.type = type;
-                this.usage = usage;
-            }
-        }
-        
-        const Roles = [
-            new Role("SCERIFFO[보안관]", "무법자 모두와 배신자를 사살하라!"),
-            new Role("VICE[부관]", "보안관을 보호하라!\n무법자 모두와 배신자를 사살하라!"),
-            new Role("VICE[부관]", "보안관을 보호하라!\n무법자 모두와 배신자를 사살하라!"),
-            new Role("FUORILEGGE[무법자]", "보안관을 사살하라!"),
-            new Role("FUORILEGGE[무법자]", "보안관을 사살하라!"),
-            new Role("FUORILEGGE[무법자]", "보안관을 사살하라!"),
-            new Role("RINNEGATO[배신자]", "게임이 끝날 때까지 혼자 살아남아라!"),
-        ];
-        const Units = [
-            new Unit("CALAMITY JANET[캘러미티 자넷]", 4, {bang: "miss or bang"}),
-            new Unit("WILIY THE KID[윌리 더 키드]", 4, {bang: "no limit"}),
-            new Unit("KIT CARLSON[키트 칼슨]", 4, {myTurn: "draw 3 _ take 2"}),
-            new Unit("BART CASSIDY[바트 캐시디]", 4, {hit : "take 1"}),
-            new Unit("LUCKY DUKE[럭키 듀크]", 4, {draw : "draw 2 _ take 1"}),
-            new Unit("SID KETCHUM[시드 케첨]", 4, {any : "remove card 2 _ heal 1"}),
-            new Unit("BLACK JACK[블랙 잭]", 4, {myTurn : "show 2nd card _ heart or dia -> take more 1"}),
-            new Unit("JOURDONNAIS[주르도네]", 4, {bangTarget : "draw 1 _ hit -> miss"}),
-            new Unit("VULTURE SAM[벌쳐 샘]", 4, {deadOther : "get dead's cards"}),
-            new Unit("JESSE JONES[제시 존스]", 4, {myTurn : "draw 2, take 2 or take 1 and take 1 others card"}),
-            new Unit("SUZY LAFAYETTE[수지 라파예트]", 4, {noCard : "take 1"}),
-            new Unit("PEDRO RAMIRES[페드로 라미레즈]", 4, {myTurn : "take 1 graveyard, draw 1"}),
-            new Unit("SLAB THE KILLER[슬랩 더 킬러]", 4, {bang : "need 2 miss card"}),
-            new Unit("ROSE DOOLAN[로즈 둘란]", 4, {range : "range - 1"}),
-            new Unit("PAUL REGRET[폴 리그레트]", 3, {range : "range + 1"}),
-            new Unit("EL GRINGO[엘 그링고]", 3, {hit : "by hitter's card take 1"}),
-        ];
-        const Weapons = [
-            new Weapon("VOLCANIC[볼캐닉]", 1),
-            new Weapon("VOLCANIC[볼캐닉]", 1),
-
-            new Weapon("SCHOFIELD[스코필드]", 2),
-            new Weapon("SCHOFIELD[스코필드]", 2),
-            new Weapon("SCHOFIELD[스코필드]", 2),
-
-            new Weapon("REMINGTON[레밍턴]", 3),
-            new Weapon("REMINGTON[레밍턴]", 3),
+            Move() {
+                this.position.Add(this.velocity);
+            }   
             
-            new Weapon("REV.CARABINE[카빈]", 4),
-            new Weapon("REV.CARABINE[카빈]", 4),
+            Clipping() {
 
-            new Weapon("WINCHESTER[윈체스터]", 5),
-        ];
+            }
 
-        //C = 클로버, H = 하트, D = 다이아, S = 스페이드
-        const Cards = [
-            new Card("BANG![뱅!]", "remove 1 target's life", "K[D]"),
-            new Card("MANCATO![빗나감!]", "miss bang", "5[S]"),
-            new Card("BIRRA[맥주]", "add 1 life 2 players", "10[H]"),
-            new Card("CAT BALOU[캣 벌로우]", "choose 1 player remove 1 card", "J[D]"),
-            new Card("PANICO![강탈!]", "get other palyer's card[range 1]", "A[H]"),
-            new Card("DUELLO[결투]", "no more bang player's life -1", "J[C]"),
-            new Card("GATLING[기관총]", "other player's life -1", "10[H]"),
-            new Card("INDIANI![인디언!]", "other player's bang -1 _ no bang -> life - 1", "A[D]"),
-            new Card("DILIGENZA[악마차]", "draw 2", "9[S]"),
-            new Card("WELLS FARGO[웰스 파고 은행]", "draw 3", "3[H]"),
-            new Card("SALOON[주점]", "other player heal 1 or heal myself 1", "5[H]"),
-            new Card("EMPORIO[잡화점]", "draw players number _ take 1 each player", "Q[S]"),
-            new Card("MUSTANG[야생마]", "range -1", "8[H]", false),
-            new Card("MIRINO[조준경]", "range +1", "A[S]", false),
-            new Card("PRIGIONE[감옥]", "draw 1 -> [H] -> play", "10[S]", false),
+            Draw() {
+                context.fillStyle = "red";
+                context.fillRect(this.position.x, this.position.y, this.size.x, this.size.y);
+            }
 
-        ]
-
-        var role_pools = [];
-        var unit_pools = [];
-        var weapon_pools = [];
-
-        function Init() {
-            role_pools = Roles;
-            unit_pools = Units;
-            weapon_pools = Weapons;
+            Update() {
+                this.Move();
+                this.Clipping();
+                this.Draw();
+            }
         }
 
-        Init();
+        bullet_pool = [];
+
+        class Bullet extends Unit {
+            constructor(position, angle) {
+                super(new Vector2D(position.x, position.y), new Vector2D(25, 25), 0, 7);
+                this.timer = 0;
+                this.limitTimer = 100;
+                this.velocity.x = Math.cos(angle/180*Math.PI) * 10;
+                this.velocity.y = Math.sin(angle/180*Math.PI) * 10;
+            }
+
+            Clipping() {
+                this.timer++;
+                if(this.timer > this.limitTimer) {
+                    bullet_pool.shift();
+                }
+            }
+        }
+
+        class Hero extends Unit {
+            constructor() {
+                super(new Vector2D(canvas.width / 2, canvas.height / 2), new Vector2D(25, 50), 5, 5);
+                this.keys = Init_Input();
+                this.backupSpeed = this.speed;
+            }
+
+            Move() {
+                super.Move();
+                if(this.keys.w) this.velocity.y = -this.speed;
+                else if(this.keys.s) this.velocity.y = this.speed;
+                else this.velocity.y = 0;
+
+                if(this.keys.a) this.velocity.x = -this.speed;
+                else if(this.keys.d) this.velocity.x = this.speed;
+                else this.velocity.x = 0;
+            }
+        }
+
+        hero = new Hero();
+        
+        class BulletManager {
+            constructor() {
+                this.timer = 0;
+                this.limitTimer = 20;
+                this.canFire = true;
+                this.angle = 0;
+            }
+
+            CreateBullet() {
+                if(this.canFire === false || hero.keys.attack === false) return;
+                this.canFire = false;
+                bullet_pool.push(new Bullet(hero.position, this.angle));
+            }
+
+            Update() {
+                if(this.canFire === false)
+                {
+                    this.timer++;
+                    if(this.timer > this.limitTimer) {
+                        this.timer = 0;
+                        this.canFire = true;
+                    }
+                }
+                else this.CreateBullet();
+                for(var i = 0; i < bullet_pool.length; i++) {
+                    bullet_pool[i].Update();
+                }
+            }
+        }
+
+        bulletManager = new BulletManager();
+
+        window.addEventListener("keydown", function(e) {
+            switch(e.key) {
+                case 'w':
+                    hero.keys.w = true;
+                    hero.keys.s = false;
+                    break;
+                case 'a':
+                    hero.keys.a = true;
+                    hero.keys.d = false;
+                    break;
+                case 's':
+                    hero.keys.s = true;
+                    hero.keys.w = false;
+                    break;
+                case 'd':
+                    hero.keys.d = true;
+                    hero.keys.a = false;
+                    break;
+            }
+        });
+
+        window.addEventListener("keyup", function(e) {
+            switch(e.key) {
+                case 'w':
+                    hero.keys.w = false;
+                    break;
+                case 'a':
+                    hero.keys.a = false;
+                    break;
+                case 's':
+                    hero.keys.s = false;
+                    break;
+                case 'd':
+                    hero.keys.d = false;
+                    break;
+            }
+        });
+
+        window.addEventListener('mousedown', function(e) {
+            hero.keys.attack = true;
+            var x = hero.position.x - e.clientX;
+            var y = hero.position.y - e.clientY;
+            var angle = Math.atan2(-y, -x) / Math.PI * 180;
+            bulletManager.angle = angle;
+        });
+
+        window.addEventListener('mouseup', function(e) {
+            hero.keys.attack = false;
+        });
+
+        window.addEventListener('mousemove', function(e) {
+            if(hero.keys.attack === true) {
+                var x = hero.position.x - e.clientX;
+                var y = hero.position.y - e.clientY;
+                var angle = Math.atan2(-y, -x) / Math.PI * 180;
+                bulletManager.angle = angle;
+            }
+        });
+
+        window.addEventListener("blur", function(e) {
+            hero.velocity.Zero();
+            hero.speed = 0;
+a        });
+
+        window.addEventListener('focus', function(e) {
+            hero.speed = hero.backupSpeed;
+            hero.keys = Init_Input();
+        })
+
+        function Update() {
+            window.requestAnimationFrame(Update);
+            canvas.width = canvas.width;
+            hero.Update();
+            bulletManager.Update();
+        }
+
+        Update();
         
     </script>
 
