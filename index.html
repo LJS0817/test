@@ -81,8 +81,6 @@
             }
         }
 
-        bullet_pool = [];
-
         class Bullet extends Unit {
             constructor(position, angle) {
                 super(position, new Vector2D(25, 25), 0, 7, "blue");
@@ -95,7 +93,7 @@
             Clipping() {
                 this.timer++;
                 if(this.timer > this.limitTimer) {
-                    bullet_pool.shift();
+                    manager.getBulletManager().pool.shift();
                 }
             }
         }
@@ -127,8 +125,8 @@
         hero = new Hero();
 
         class Monster extends Unit {
-            constructor() {
-                super(new Vector2D(Math.random() * canvas.width, 10), new Vector2D(25, 50), 3, 0.3, "green");
+            constructor(type) {
+                super(new Vector2D(type.x, type.y), new Vector2D(25, 50), 3, 0.3, "green");
             }
 
             setTarget(target) {
@@ -151,12 +149,13 @@
                 this.limitTimer = 10;
                 this.canFire = true;
                 this.angle = 0;
+                this.pool = [];
             }
 
             CreateBullet(target) {
                 if(this.canFire === false || hero.keys.attack === false) return;
                 this.canFire = false;
-                bullet_pool.push(new Bullet(target, this.angle));
+                this.pool.push(new Bullet(target, this.angle));
             }
 
             Update(target) {
@@ -169,13 +168,58 @@
                     }
                 }
                 else this.CreateBullet(target);
-                for(var i = 0; i < bullet_pool.length; i++) {
-                    bullet_pool[i].Update(target);
+                for(var i = 0; i < this.pool.length; i++) {
+                    this.pool[i].Update(target);
                 }
             }
         }
 
-        bulletManager = new BulletManager();
+        class MonsterManager {
+            constructor() {
+                this.pool = [];
+            }
+
+            getType() {
+                return Math.floor(Math.random() * 10) % 4;
+            }
+
+            CreateMonster() {
+                var type = this.getType();
+                var target = new Vector2D(Math.random() * canvas.width, 0);
+                if(type === 0) target = new Vector2D(Math.random() * canvas.width, canvas.height);
+                else if(type === 1) target = new Vector2D(0, Math.random() * canvas.height);
+                else if(type === 2) target = new Vector2D(canvas.width, Math.random() * canvas.height);
+                this.pool.push(new Monster(target, this.angle));
+            }
+
+            Update(target) {
+                for(var i = 0; i < this.pool.length; i++) {
+                    this.pool[i].Update(target);
+                }
+            }
+        }
+
+        class Manager {
+            constructor() {
+                this.bullet = new BulletManager();
+                this.monster = new MonsterManager();
+            }
+
+            getBulletManager() {
+                return this.bullet;
+            }
+
+            getMonsterManager() {
+                return this.monster;
+            }
+
+            Update(target) {
+                this.bullet.Update(target);
+                this.monster.Update(target);
+            }
+        }
+
+        manager = new Manager();
 
         window.addEventListener("keydown", function(e) {
             switch(e.key) {
@@ -217,11 +261,10 @@
 
         window.addEventListener('mousedown', function(e) {
             hero.keys.attack = true;
-            var pos = hero.position.Copy();
-            var x = pos.x - e.clientX;
-            var y = pos.x - e.clientY;
+            var x = canvas.width * 0.5 - e.clientX;
+            var y = canvas.height * 0.5 - e.clientY;
             var angle = Math.atan2(-y, -x) / Math.PI * 180;
-            bulletManager.angle = angle;
+            manager.getBulletManager().angle = angle;
         });
 
         window.addEventListener('mouseup', function(e) {
@@ -230,11 +273,10 @@
 
         window.addEventListener('mousemove', function(e) {
             if(hero.keys.attack === true) {
-                var pos = hero.position.Copy();
                 var x = canvas.width * 0.5 - e.clientX;
                 var y = canvas.height * 0.5 - e.clientY;
                 var angle = Math.atan2(-y, -x) / Math.PI * 180;
-                bulletManager.angle = angle;
+                manager.getBulletManager().angle = angle;
             }
         });
 
@@ -248,20 +290,11 @@
             hero.keys = Init_Input();
         })
 
-        monster = new Monster();
-        monster1 = new Monster();
-        monster2 = new Monster();
-        monster3 = new Monster();
-
         function Update() {
             window.requestAnimationFrame(Update);
             canvas.width = canvas.width;
             hero.Update();
-            bulletManager.Update(hero.position.Copy());
-            monster.Update(hero.position.Copy());
-            monster1.Update(hero.position.Copy());
-            monster2.Update(hero.position.Copy());
-            monster3.Update(hero.position.Copy());
+            manager.Update(hero.position.Copy());
         }
 
         Update();
