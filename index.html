@@ -56,6 +56,7 @@
                 this.speed = speed;
                 this.velocity = new Vector2D(0, 0);
                 this.color = color;
+                this.anchor = new Vector2D(0.5, 0.5);
             }
 
             Move() {
@@ -105,6 +106,11 @@
                 this.backupSpeed = this.speed;
             }
 
+            Rotate(angle) {
+                context.translate(canvas.width / 2, canvas.height / 2);
+                context.rotate(angle*Math.PI/180);
+            }
+
             Move() {
                 super.Move();
                 if(this.keys.w) this.velocity.y = -this.speed;
@@ -118,11 +124,18 @@
 
             Draw(target = null) {
                 context.fillStyle = this.color;
-                context.fillRect(canvas.width / 2, canvas.height / 2, this.size.x, this.size.y);
+                context.fillRect(0 - this.size.x * this.anchor.x, 0 - this.size.y * this.anchor.y, this.size.x, this.size.y);
+            }
+
+            Update(target = null) {
+                context.save();
+                this.Move();
+                this.Rotate(target);
+                this.Clipping();
+                this.Draw();
+                context.restore();
             }
         }
-
-        hero = new Hero();
 
         class Monster extends Unit {
             constructor(type) {
@@ -153,7 +166,7 @@
             }
 
             CreateBullet(target) {
-                if(this.canFire === false || hero.keys.attack === false) return;
+                if(this.canFire === false || manager.getHero().keys.attack === false) return;
                 this.canFire = false;
                 this.pool.push(new Bullet(target, this.angle));
             }
@@ -203,6 +216,12 @@
             constructor() {
                 this.bullet = new BulletManager();
                 this.monster = new MonsterManager();
+                this.hero = new Hero();
+                this.angle = 0;
+            }
+
+            getHero() {
+                return this.hero;
             }
 
             getBulletManager() {
@@ -213,9 +232,10 @@
                 return this.monster;
             }
 
-            Update(target) {
-                this.bullet.Update(target);
-                this.monster.Update(target);
+            Update() {
+                this.hero.Update(this.angle);
+                this.bullet.Update(this.hero.position.Copy());
+                this.monster.Update(this.hero.position.Copy());
             }
         }
 
@@ -224,20 +244,20 @@
         window.addEventListener("keydown", function(e) {
             switch(e.key) {
                 case 'w':
-                    hero.keys.w = true;
-                    hero.keys.s = false;
+                    manager.hero.keys.w = true;
+                    manager.hero.keys.s = false;
                     break;
                 case 'a':
-                    hero.keys.a = true;
-                    hero.keys.d = false;
+                    manager.hero.keys.a = true;
+                    manager.hero.keys.d = false;
                     break;
                 case 's':
-                    hero.keys.s = true;
-                    hero.keys.w = false;
+                    manager.hero.keys.s = true;
+                    manager.hero.keys.w = false;
                     break;
                 case 'd':
-                    hero.keys.d = true;
-                    hero.keys.a = false;
+                    manager.hero.keys.d = true;
+                    manager.hero.keys.a = false;
                     break;
             }
         });
@@ -245,22 +265,22 @@
         window.addEventListener("keyup", function(e) {
             switch(e.key) {
                 case 'w':
-                    hero.keys.w = false;
+                    manager.hero.keys.w = false;
                     break;
                 case 'a':
-                    hero.keys.a = false;
+                    manager.hero.keys.a = false;
                     break;
                 case 's':
-                    hero.keys.s = false;
+                    manager.hero.keys.s = false;
                     break;
                 case 'd':
-                    hero.keys.d = false;
+                    manager.hero.keys.d = false;
                     break;
             }
         });
 
         window.addEventListener('mousedown', function(e) {
-            hero.keys.attack = true;
+            manager.hero.keys.attack = true;
             var x = canvas.width * 0.5 - e.clientX;
             var y = canvas.height * 0.5 - e.clientY;
             var angle = Math.atan2(-y, -x) / Math.PI * 180;
@@ -268,33 +288,33 @@
         });
 
         window.addEventListener('mouseup', function(e) {
-            hero.keys.attack = false;
+            manager.hero.keys.attack = false;
         });
 
         window.addEventListener('mousemove', function(e) {
-            if(hero.keys.attack === true) {
-                var x = canvas.width * 0.5 - e.clientX;
-                var y = canvas.height * 0.5 - e.clientY;
-                var angle = Math.atan2(-y, -x) / Math.PI * 180;
+            var x = canvas.width * 0.5 - e.clientX;
+            var y = canvas.height * 0.5 - e.clientY;
+            var angle = Math.atan2(-y, -x) / Math.PI * 180;
+            if(manager.hero.keys.attack === true) {
                 manager.getBulletManager().angle = angle;
             }
+            manager.angle = angle;
         });
 
         window.addEventListener("blur", function(e) {
-            hero.velocity.Zero();
-            hero.speed = 0;
+            manager.hero.velocity.Zero();
+            manager.hero.speed = 0;
         });
 
         window.addEventListener('focus', function(e) {
-            hero.speed = hero.backupSpeed;
-            hero.keys = Init_Input();
+            manager.hero.speed = manager.hero.backupSpeed;
+            manager.hero.keys = Init_Input();
         })
 
         function Update() {
             window.requestAnimationFrame(Update);
             canvas.width = canvas.width;
-            hero.Update();
-            manager.Update(hero.position.Copy());
+            manager.Update();
         }
 
         Update();
